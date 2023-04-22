@@ -67,7 +67,6 @@ $capitalizedString = $textInfo.ToTitleCase($inputString.ToLower())
 
  $LogonScript = @"
 
-' GetUsername
 Option Explicit
 Dim objNetwork, strUsername
 
@@ -78,59 +77,60 @@ Set objNetwork = CreateObject("WScript.Network")
 strUsername = objNetwork.UserName
 
 If strUsername = "$UserName" Then
-Set WshShell = CreateObject("WScript.Shell")
-Set FSO = CreateObject("Scripting.FileSystemObject")
 
-DocumentsPath = WshShell.SpecialFolders("MyDocuments")
+    Dim objShell, strDocumentsPath, strMusicPath, strVideosPath, strFavoritesPath, strRegKey
 
-Set OutFile = FSO.CreateTextFile("DocumentsPath.txt", True)
-OutFile.WriteLine DocumentsPath
-OutFile.Close
-UserDocumentPath = " & DocumentsPath & vbCrLf & "
+    Set objShell = CreateObject("WScript.Shell")
 
-' CopyMultipleDirectoriesToMultipleTargets
+    strRegKey = "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\"
 
-Dim objFSO, sourceFolder, destFolder, i
+    strDocumentsPath = objShell.RegRead(strRegKey & "Personal")
+    strMusicPath = objShell.RegRead(strRegKey & "My Music")
+    strVideosPath = objShell.RegRead(strRegKey & "My Video")
+    strFavoritesPath = objShell.RegRead(strRegKey & "Favorites")
 
-Set objFSO = CreateObject("Scripting.FileSystemObject")
+    Dim objFSO
 
-Dim oFSO
-Set oFSO = CreateObject("Scripting.FileSystemObject")
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
 
-' Create a new folder
-'oFSO.CreateFolder "C:\Users\$UserName\Desktop"
+    ' Replace the placeholders with your actual source and destination folder paths
+    CopyFolderContents "C:\Source\CP\" & strUsername & "\Documents", strDocumentsPath
+    CopyFolderContents "C:\Source\CP\" & strUsername & "\Music", strMusicPath
+    CopyFolderContents "C:\Source\CP\" & strUsername & "\Videos", strVideosPath
+    CopyFolderContents "C:\Source\CP\" & strUsername & "\Favorites", strFavoritesPath
 
-' Define source folders and destination folders
+    Sub CopyFolderContents(srcFolder, destFolder)
+    If objFSO.FolderExists(srcFolder) And objFSO.FolderExists(destFolder) Then
+        Dim objSrcFolder, objFile, objSubFolder
 
-Set sourceFolder = objFSO.GetFolder("C:\Source\CP\$UserName\Documents")
-Set destFolder = objFSO.GetFolder("C:\Users\$UserName\Documents")
-objFSO.CopyFolder sourceFolder.Path, destFolder.Path, True
+        Set objSrcFolder = objFSO.GetFolder(srcFolder)
 
-Set sourceFolder = objFSO.GetFolder("C:\Source\CP\$UserName\Videos")
-Set destFolder = objFSO.GetFolder("C:\Users\$UserName\Videos")
-objFSO.CopyFolder sourceFolder.Path, destFolder.Path, True
+        ' Copy all files
+        For Each objFile In objSrcFolder.Files
+            objFSO.CopyFile objFile.Path, destFolder & "\" & objFile.Name, True
+        Next
 
-Set sourceFolder = objFSO.GetFolder("C:\Source\CP\$UserName\Music")
-Set destFolder = objFSO.GetFolder("C:\Users\$UserName\Music")
-objFSO.CopyFolder sourceFolder.Path, destFolder.Path, True
+        ' Copy all subfolders
+        For Each objSubFolder In objSrcFolder.SubFolders
+            objFSO.CopyFolder objSubFolder.Path, destFolder & "\" & objSubFolder.Name, True
+        Next
 
-Set sourceFolder = objFSO.GetFolder("C:\Source\CP\$UserName\Favorites")
-Set destFolder = objFSO.GetFolder("C:\Users\$UserName\Favorites")
-objFSO.CopyFolder sourceFolder.Path, destFolder.Path, True
-
-'Set sourceFolder = objFSO.GetFolder("C:\Source\CP\$UserName\Desktop")
-'Set destFolder = objFSO.GetFolder("C:\Users\$UserName\Desktop")
-'objFSO.CopyFolder sourceFolder.Path, destFolder.Path, True
-
-Set objFSO = Nothing
-'Set oFso = CreateObject("Scripting.FileSystemObject") : oFso.DeleteFile Wscript.ScriptFullName, True
+        'WScript.Echo "Successfully copied files from " & srcFolder & " to " & destFolder
+    ElseIf Not objFSO.FolderExists(srcFolder) Then
+        'WScript.Echo "Source folder not found: " & srcFolder
+        WScript.Quit
+    ElseIf Not objFSO.FolderExists(destFolder) Then
+        'WScript.Echo "Destination folder not found: " & destFolder
+        WScript.Quit
+    End If
+End Sub
 Else
-Wscript.Quit
+    WScript.Quit
 End If
 
-' Clean up
+Set objNetwork = Nothing
+Set objShell = Nothing
 Set objFSO = Nothing
-Wscript.Quit
 
 "@
         
