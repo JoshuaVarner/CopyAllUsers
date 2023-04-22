@@ -3,11 +3,11 @@ Add-Type -AssemblyName Microsoft.VisualBasic
 Add-Type -AssemblyName System.Windows.Forms
 
 # Display the input box for the first input
-$firstInput = [Microsoft.VisualBasic.Interaction]::InputBox("Enter the source Computer name", "First Input")
+$firstInput = [Microsoft.VisualBasic.Interaction]::InputBox("Enter the source Computer name", "Source Computer Name")
 $firstInputNoSpaces = $firstInput -replace ' ', ''
 
 # Display the input box for the second input
-$secondInput = [Microsoft.VisualBasic.Interaction]::InputBox("Enter the destination Computer name", "Second Input")
+$secondInput = [Microsoft.VisualBasic.Interaction]::InputBox("Enter the destination Computer name", "Destination Computer Name")
 $secondInputNoSpaces = $secondInput -replace ' ', ''
 
 # Display the inputs without spaces to verify
